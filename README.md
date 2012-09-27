@@ -9,4 +9,4 @@ $ git clone git@github.com:timcheadle/rdio-notify.git
 $ cd rdio-notify
 $ ./rdio-notify.rb
 ```
-Now go to [http://localhost:4567][], log in and enjoy!
+Now go to [http://localhost:4567](), log in and enjoy!
