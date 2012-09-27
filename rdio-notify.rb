@@ -3,11 +3,58 @@
 require 'rubygems'
 require 'sinatra'
 require 'uri'
+require 'yaml'
 
 require_relative 'rdio'
 require_relative 'rdio-credentials'
 
 enable :sessions
+
+class Artist
+  attr_accessor :name, :key
+
+  def self.from_json(artist)
+    new_artist = Artist.new
+    new_artist.name = artist['name']
+    new_artist.key  = artist['artistKey']
+
+    return new_artist
+  end
+end
+
+
+class Album
+  attr_accessor :artist, :name, :icon, :short_url
+
+  def self.from_json(album)
+    new_album = Album.new
+    new_album.name      = album['name']
+    new_album.short_url = album['shortUrl']
+    new_album.icon      = album['icon']
+
+    new_album.artist      = Artist.new
+    new_album.artist.name = album['artist']
+    new_album.artist.key  = album['artistKey']
+
+    return new_album
+  end
+end
+
+
+def find_new_albums(new_releases, collection_artists)
+  new_albums = []
+
+  collection_artists.each do |search_artist|
+    new_releases.each do |release|
+      if release.artist.key == search_artist.key
+        new_albums.push(release)
+      end
+    end
+  end
+
+  return new_albums
+end
+
 
 get '/' do
   access_token = session[:at]
@@ -16,16 +63,19 @@ get '/' do
     rdio = Rdio.new([RDIO_CONSUMER_KEY, RDIO_CONSUMER_SECRET], 
                     [access_token, access_token_secret])
 
-    currentUser = rdio.call('currentUser')['result']
-    playlists = rdio.call('getPlaylists')['result']['owned']
+    current_user = rdio.call('currentUser')['result']
+    new_releases = rdio.call('getNewReleases')['result'].collect { |r| Album.from_json(r) }
+    artists      = rdio.call('getArtistsInCollection')['result'].collect { |a| Artist.from_json(a) }
+
+    new_albums = find_new_albums(new_releases, artists)
 
     response = "
-    <html><head><title>Rdio-Simple Example</title></head><body>
+    <html><head><title>rdio-notify</title></head><body>
     <p>%s's playlists:</p>
     <ul>
-    " % currentUser['firstName']
-    playlists.each do |playlist|
-      response += '<li><a href="%s">%s</a></li>' % [playlist['shortUrl'], playlist['name']]
+    " % current_user['firstName']
+    new_albums.each do |album|
+      response += '<li><a href="%s"><img src="%s">%s - %s</a></li>' % [album.short_url, album.icon, album.artist.name, album.name]
     end
     response += '</ul><a href="/logout">Log out of Rdio</a></body></html>'
     return response
