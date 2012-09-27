@@ -71,11 +71,15 @@ get '/' do
 
     response = "
     <html><head><title>rdio-notify</title></head><body>
-    <p>%s's playlists:</p>
+    <p>New releases from artists in %s's collection:</p>
     <ul>
     " % current_user['firstName']
-    new_albums.each do |album|
-      response += '<li><a href="%s"><img src="%s">%s - %s</a></li>' % [album.short_url, album.icon, album.artist.name, album.name]
+    if new_albums
+      new_albums.each do |album|
+        response += '<li><a href="%s"><img src="%s">%s - %s</a></li>' % [album.short_url, album.icon, album.artist.name, album.name]
+      end
+    else
+      response += "No new releases."
     end
     response += '</ul><a href="/logout">Log out of Rdio</a></body></html>'
     return response
