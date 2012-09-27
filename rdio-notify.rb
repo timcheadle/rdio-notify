@@ -4,8 +4,8 @@ require 'rubygems'
 require 'sinatra'
 require 'uri'
 
-require './vendor/ruby/rdio'
-require './rdio_consumer_credentials'
+require_relative 'rdio'
+require_relative 'rdio-credentials'
 
 enable :sessions
 
