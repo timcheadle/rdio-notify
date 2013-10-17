@@ -64,7 +64,9 @@ get '/' do
                     [access_token, access_token_secret])
 
     current_user = rdio.call('currentUser')['result']
-    new_releases = rdio.call('getNewReleases')['result'].collect { |r| Album.from_json(r) }
+    new_releases = rdio.call('getNewReleases', {'time' => 'thisweek'})['result'].collect { |r| Album.from_json(r) }
+    new_releases += rdio.call('getNewReleases', {'time' => 'lastweek'})['result'].collect { |r| Album.from_json(r) }
+    new_releases += rdio.call('getNewReleases', {'time' => 'twoweeks'})['result'].collect { |r| Album.from_json(r) }
     artists      = rdio.call('getArtistsInCollection')['result'].collect { |a| Artist.from_json(a) }
 
     new_albums = find_new_albums(new_releases, artists)
